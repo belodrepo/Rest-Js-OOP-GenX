@@ -1,0 +1,193 @@
+A megadott HTML és JavaScript kódot egy React alkalmazásra kell átalakítani. Az alábbiakban a React verziót mutatom be, amely az alapvető funkciókat tartalmazza, mint például a felhasználók lekérdezése, felvitele és törlése.
+React alkalmazás létrehozása
+
+    Kezdeti setup: Először is hozd létre az alkalmazást a React CLI-vel:
+
+    npx create-react-app user-age-generation
+    cd user-age-generation
+    npm install bootstrap
+
+    Az App.js fájl módosítása:
+
+    Cseréld le az alapértelmezett App.js fájlt az alábbi kóddal, amely a React alapú változatot tartalmazza:
+
+import React, { useEffect, useState } from 'react';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { FaTrash } from 'react-icons/fa';
+
+const apiUrl = 'http://localhost:3000/api/generations';
+
+function App() {
+  const [users, setUsers] = useState([]);
+  const [name, setName] = useState('');
+  const [birthdate, setBirthdate] = useState('');
+
+  // Felhasználók lekérdezése az API-ról
+  useEffect(() => {
+    const getUsers = async () => {
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        setUsers(data);
+      } catch (e) {
+        console.error(e.message);
+        alert('Hiba történt az adatok elérése során!');
+      }
+    };
+
+    getUsers();
+  }, []);
+
+  // Felhasználó hozzáadása
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!name || !birthdate) {
+      alert('Hiányzó adatok!');
+      return;
+    }
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, birthdate }),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        alert(result.message);
+        setName('');
+        setBirthdate('');
+        // Frissítjük a felhasználók listáját
+        const updatedUsers = await (await fetch(apiUrl)).json();
+        setUsers(updatedUsers);
+      } else {
+        alert(result.message);
+      }
+    } catch (e) {
+      alert(e.message);
+    }
+  };
+
+  // Felhasználó törlése
+  const handleDelete = async (id) => {
+    if (window.confirm('Valóban törölni akarod a felhasználót?')) {
+      const response = await fetch(`${apiUrl}/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        alert('A felhasználó törlése megtörtént.');
+        setUsers(users.filter((user) => user.id !== id));
+      } else {
+        alert('A felhasználó adatainak a törlése sikertelen volt!');
+      }
+    }
+  };
+
+  return (
+    <div className="container">
+      <h2 className="text-center mt-3">REST API - User Age and Generation</h2>
+      <h4 className="text-center">(OOP Backend)</h4>
+
+      <div className="row">
+        <div className="col-md-3"></div>
+        <div className="col-md-6">
+          <form onSubmit={handleSubmit} className="border p-3 my-3">
+            <div>
+              <label htmlFor="name" className="form-label">
+                Név
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                id="name"
+                name="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Vezeték és Keresztnév..."
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="birthdate" className="form-label">
+                Születési dátum
+              </label>
+              <input
+                type="date"
+                className="form-control"
+                id="birthdate"
+                name="birthdate"
+                value={birthdate}
+                onChange={(e) => setBirthdate(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary mt-3">
+              Elküld
+            </button>
+          </form>
+
+          <table className="table table-bordered table-striped table-hover">
+            <thead className="table-primary">
+              <tr>
+                <th>#</th>
+                <th>Név</th>
+                <th>Születési dátum</th>
+                <th>Életkor</th>
+                <th>Generáció</th>
+                <th>Művelet</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user.id}>
+                  <td>{user.id}</td>
+                  <td>{user.name}</td>
+                  <td>{user.birthdate}</td>
+                  <td>{user.age}</td>
+                  <td>{user.gen}</td>
+                  <td>
+                    <button
+                      className="btn btn-danger"
+                      title={`A(z) ${user.name} nevű felhasználó törlése.`}
+                      onClick={() => handleDelete(user.id)}
+                    >
+                      <FaTrash />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="col-md-3"></div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+Mi történt ebben a kódban:
+
+    React Hook-ok használata:
+        A useState hook-ot használtam az adatok tárolására (users, name, birthdate).
+        A useEffect hook segítségével töltjük be a felhasználói adatokat az API-ról, amint az oldal betöltődik.
+
+    Felhasználói adatok kezelése:
+        A felhasználók lekérése az API-ról fetch segítségével történik.
+        A felhasználó felvitele POST kéréssel történik, és a válasz alapján frissítjük az adatokat.
+        A felhasználó törlésére DELETE kérést küldünk az API-ra, majd a törölt felhasználót eltávolítjuk a helyi állapotból.
+
+    Formázás:
+        A Bootstrap CSS keretrendszert alkalmaztam a dizájn egyszerűsítésére.
+        Az React Icons csomagból származó FaTrash ikont használjuk a törlés gombon.
+
+Futatás:
+
+A kód futtatásához először a következő parancsokat kell kiadni:
+
+npm start
+
+Ez elindítja a React alkalmazást a böngészőben, és interaktívan kezelheted a felhasználói adatokat.
