@@ -9,6 +9,7 @@ const port = 3000;
 app.use(express.json());
 app.use(cors());
 
+
 const db = new sqlite3.Database('genx.db', (err) => {
     if (err) {
         console.log(err.message);
@@ -49,6 +50,20 @@ app.get('/api/generations', (req, res) => {
         res.status(200).json(data);
     });
 
+});
+
+app.delete('/api/generations/:id', (req, res) => {
+    const { id } = req.params;
+
+    db.run(`DELETE FROM users WHERE id = ?`, [id], 
+        function (err) {
+            if (err) {
+                return res.status(500).send(err.message);
+            } else {
+                res.status(204).json( { message: 'Sikeres adattörlés!' });
+            }
+
+        });
 });
 
 app.listen(port, () => {
