@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
-const generation = require('./age');
+const age = require('./age');
 
 const app = express();
 const port = 3000;
@@ -29,9 +29,9 @@ const db = new sqlite3.Database('genx.db', (err) => {
 
 app.post('/api/generations', (req, res) => {
     const { name, birthdate } = req.body;
-    const genObj = new generation.Generations(birthdate);
-    const userage = genObj.getAge();
-    const usergen = genObj.getGeneration();
+    const ageObj = new age.Generations(birthdate);
+    const userage = ageObj.getAge();
+    const usergen = ageObj.getGeneration();
 
     db.run(`INSERT INTO users (name, birthdate, age, gen) VALUES (?, ?, ?, ?)`,
         [name, birthdate, userage, usergen],

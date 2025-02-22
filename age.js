@@ -11,31 +11,31 @@ class Generations extends Age {
     constructor(bd) {
         super(bd);
     }
-    birthyear = this.birthday.getFullYear();
-    generation = '';
+    bd = this.birthday.getFullYear();
+    gen = '';
 getGeneration() {
         switch (true) {
-            case this.birthyear >= 1946 && this.birthyear <= 1964:
-                this.generation = 'Baby Boomer';
+            case this.bd >= 1946 && this.bd <= 1964:
+                this.gen = 'Baby Boomer';
                 break;
-            case this.birthyear >= 1965 && this.birthyear <= 1980:
-                this.generation = 'X generáció';
+            case this.bd >= 1965 && this.bd <= 1980:
+                this.gen = 'X generáció';
                 break;
-            case this.birthyear >= 1981 && this.birthyear <= 1996:
-                this.generation = 'Y generáció';
+            case this.bd >= 1981 && this.bd <= 1996:
+                this.gen = 'Y generáció';
                 break;
-            case this.birthyear >= 1997 && this.birthyear <= 2012:
-                this.generation = 'Z generáció';
+            case this.bd >= 1997 && this.bd <= 2012:
+                this.gen = 'Z generáció';
                 break;
-            case this.birthyear >= 2013 && this.birthyear <= 2024:
-                this.generation = 'Alfa generáció';
+            case this.bd >= 2013 && this.bd <= 2024:
+                this.gen = 'Alfa generáció';
                 break;
             default:
-                this.generation = 'veterán';
+                this.gen = 'veterán';
                 
 
         }
-        return this.generation;
+        return this.gen;
     }
 }
 
