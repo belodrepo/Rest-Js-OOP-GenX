@@ -1,0 +1,82 @@
+A React alkalmazások tesztelésére a Jest és a React Testing Library kombinációját fogjuk használni. Az alapértelmezett create-react-app már telepíti a Jest tesztelési keretrendszert, így csak a tesztek megírása szükséges.
+A szükséges csomagok telepítése:
+
+A React tesztekhez alapértelmezetten a Jest és a React Testing Library jön a create-react-app-ban, így nem szükséges semmit telepíteni. Ha azonban más eszközöket használsz, telepítheted őket:
+
+npm install --save-dev @testing-library/react @testing-library/jest-dom jest
+
+Kliens oldal tesztelése (App.test.js):
+
+Ebben a tesztben a következőket fogjuk ellenőrizni:
+
+    Az űrlap helyes működése (adatok beküldése)
+    A felhasználók helyes megjelenítése
+    A felhasználók törlésének működése
+
+Íme egy alapvető tesztelési minta az App.js fájlhoz:
+
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import App from './App';
+import { server } from './mockServer'; // Mock szerver, ha szükséges
+import '@testing-library/jest-dom/extend-expect';
+
+jest.mock('react-icons/fa', () => ({
+  FaTrash: () => <span>Delete Icon</span>,
+}));
+
+// Tesztelés a felhasználók betöltésére
+test('renders user data', async () => {
+  render(<App />);
+
+  // Várjuk, hogy a felhasználók listája megjelenjen
+  await waitFor(() => screen.getByText('Név'));
+
+  expect(screen.getByText('Név')).toBeInTheDocument();
+  expect(screen.getByText('Születési dátum')).toBeInTheDocument();
+  expect(screen.getByText('Életkor')).toBeInTheDocument();
+  expect(screen.getByText('Generáció')).toBeInTheDocument();
+});
+
+// Tesztelés az űrlap beküldésére
+test('submits form correctly', async () => {
+  render(<App />);
+
+  // űrlap elemek
+  const nameInput = screen.getByPlaceholderText('Vezeték és Keresztnév...');
+  const birthdateInput = screen.getByLabelText('Születési dátum');
+  const submitButton = screen.getByText('Elküld');
+
+  // Beviteli adatok
+  fireEvent.change(nameInput, { target: { value: 'John Doe' } });
+  fireEvent.change(birthdateInput, { target: { value: '1990-01-01' } });
+
+  // Űrlap beküldése
+  fireEvent.click(submitButton);
+
+  // Várjuk, hogy a felhasználó adatai megjelenjenek
+  await waitFor(() => screen.getByText('John Doe'));
+
+  expect(screen.getByText('John Doe')).toBeInTheDocument();
+  expect(screen.getByText('1990-01-01')).toBeInTheDocument();
+});
+
+// Tesztelés a törlés gomb működésére
+test('deletes user correctly', async () => {
+  render(<App />);
+
+  // Feltételezzük, hogy van egy felhasználó az alkalmazásban
+  const deleteButton = screen.getByText('Delete Icon');
+
+  fireEvent.click(deleteButton);
+
+  // Várjuk, hogy a törlés megerősítő üzenet jelenjen meg
+  await waitFor(() => expect(window.confirm).toHaveBeenCalledWith('Valóban törölni akarod a felhasználót?'));
+
+  // Itt lehet tesztelni a törlés hatását, pl. eltűnik a felhasználó a táblázatból
+});
+
+Tesztelési magyarázat:
+
+    Az await waitFor(...) használatával biztosítjuk, hogy a UI megfelelően frissüljön, mielőtt ellenőrizzük az eredményt.
+    A fireEvent.change és fireEvent.click segítségével szimuláljuk az interakciókat (például űrlap kitöltése és beküldése).
+    A jest.mock segítségével mock-oltuk a törlés ikont (FaTrash), hogy elkerüljük a valódi ikont.

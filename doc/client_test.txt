@@ -1,0 +1,135 @@
+A nem React kliens (a client.js) tesztelése a JavaScript kód unit tesztelésére vonatkozik, amelyben HTTP kéréseket küldünk, valamint DOM manipulációkat végzünk.
+Cél:
+
+    Tesztelni a client.js fájlban lévő kód működését.
+    Ellenőrizni, hogy a felhasználók lekérdezése, felvitele és törlése megfelelően működik.
+
+A teszteléshez a Jest keretrendszert fogjuk használni, és a jest-fetch-mock csomagot a fetch API mockolásához, hogy ne szükséges közvetlenül adatokat kérni az API-ból.
+1. A szükséges csomagok telepítése:
+
+Először is telepíteni kell a tesztelési csomagokat:
+
+npm install --save-dev jest jest-fetch-mock
+
+A jest-fetch-mock segítségével mockolni tudjuk a fetch API-t, hogy ne kelljen tényleges HTTP kéréseket küldeni.
+2. A client.js tesztelése
+Készítsük el a teszt fájlt (client.test.js):
+
+import { getUsers, deleteUser } from './client';  // Itt kell importálni a tesztelni kívánt funkciókat
+import 'jest-fetch-mock';
+
+beforeEach(() => {
+  fetch.resetMocks(); // Minden teszt előtt reseteljük a mock-olt fetch-t
+});
+
+describe('client.js', () => {
+  test('getUsers - sikeres adatlekérés', async () => {
+    // Mock adat, amit a fetch-nek kell visszaadnia
+    const mockUsers = [
+      {
+        id: 1,
+        name: 'John Doe',
+        birthdate: '1990-01-01',
+        age: 35,
+        gen: 'Millennial'
+      },
+      {
+        id: 2,
+        name: 'Jane Doe',
+        birthdate: '1995-02-02',
+        age: 30,
+        gen: 'Gen Z'
+      }
+    ];
+
+    // Mockoljuk a fetch válaszát
+    fetch.mockResponseOnce(JSON.stringify(mockUsers));
+
+    // Hívjuk meg a getUsers függvényt
+    await getUsers();
+
+    // Ellenőrizzük, hogy a fetch valóban hívódott
+    expect(fetch).toHaveBeenCalledWith('http://localhost:3000/api/generations');
+    
+    // Ellenőrizzük, hogy a mockolt adatokat helyesen dolgozza fel
+    expect(document.querySelectorAll('tbody tr').length).toBe(mockUsers.length);
+    expect(document.querySelector('tbody').innerHTML).toContain('John Doe');
+    expect(document.querySelector('tbody').innerHTML).toContain('Jane Doe');
+  });
+
+  test('deleteUser - sikeres törlés', async () => {
+    // Mock adat
+    const userId = 1;
+    
+    // Mockoljuk a fetch törlés válaszát
+    fetch.mockResponseOnce(JSON.stringify({ message: 'A felhasználó törlése megtörtént.' }));
+
+    // Mockoljuk a window.confirm-t, hogy mindig true-t adjon vissza (törlés megerősítése)
+    window.confirm = jest.fn(() => true);
+
+    // Hívjuk meg a deleteUser függvényt
+    await deleteUser(userId);
+
+    // Ellenőrizzük, hogy a fetch törléshez kapcsolódóan volt hívás
+    expect(fetch).toHaveBeenCalledWith(`http://localhost:3000/api/generations/${userId}`, {
+      method: 'DELETE',
+    });
+
+    // Ellenőrizzük, hogy a válasz helyes üzenetet ad
+    expect(window.confirm).toHaveBeenCalledWith('Valóban törölni akarod a felhasználót?');
+  });
+
+  test('getUsers - hiba történt', async () => {
+    // Mockoljuk a fetch hibás választ
+    fetch.mockRejectOnce(new Error('API hiba'));
+
+    // Hívjuk meg a getUsers függvényt, és ellenőrizzük, hogy hibaüzenet jelenik meg
+    await getUsers();
+
+    // Ellenőrizzük, hogy a hiba esetén alert hívásra kerül
+    expect(window.alert).toHaveBeenCalledWith('Hiba történt az adatok elérése során!');
+  });
+
+  test('deleteUser - törlés hiba', async () => {
+    // Mock adat
+    const userId = 1;
+
+    // Mockoljuk a fetch hibás válaszát
+    fetch.mockResponseOnce(JSON.stringify({ message: 'A felhasználó adatainak a törlése sikertelen volt!' }), { status: 500 });
+
+    // Mockoljuk a window.confirm-t, hogy mindig true-t adjon vissza (törlés megerősítése)
+    window.confirm = jest.fn(() => true);
+
+    // Hívjuk meg a deleteUser függvényt
+    await deleteUser(userId);
+
+    // Ellenőrizzük, hogy a törlés sikertelen volt, és hibaüzenetet kapunk
+    expect(window.alert).toHaveBeenCalledWith('A felhasználó adatainak a törlése sikertelen volt!');
+  });
+});
+
+Magyarázat a tesztelésről:
+
+    beforeEach:
+        A beforeEach hook biztosítja, hogy minden teszt előtt a fetch mockot alaphelyzetbe állítjuk (reset).
+    getUsers - sikeres adatlekérés:
+        A fetch.mockResponseOnce segítségével beállítjuk, hogy a fetch hívásunk visszaadjon egy szimulált adatot (mockUsers).
+        A getUsers függvényt meghívjuk, és ellenőrizzük, hogy a DOM frissült-e a megfelelő adatokkal.
+    deleteUser - sikeres törlés:
+        A deleteUser funkció teszteléséhez először mockoljuk a törlésre vonatkozó válaszokat (fetch.mockResponseOnce).
+        A window.confirm függvényt is mockoljuk, hogy mindig true-t adjon vissza, így a törlés megtörténik.
+    getUsers - hiba történt:
+        A fetch.mockRejectOnce segítségével egy hibás válasz szimulálása történik, amit a getUsers funkciónak le kell kezelnie. Végül ellenőrizzük, hogy a hiba esetén megfelelő alert üzenet jelenik meg.
+    deleteUser - törlés hiba:
+        A fetch mockot hibás válaszra állítjuk (500-as státuszkóddal), és ellenőrizzük, hogy a hibaüzenet helyesen jelenik meg.
+
+3. Teszt futtatása
+
+Miután megírtuk a teszteket, futtathatjuk őket a következő parancsokkal:
+
+npm test
+
+Ez elindítja a tesztelési folyamatot, és a tesztek futásának eredményét a terminálban látjuk.
+Összefoglalás
+
+A fenti kód bemutatta, hogyan lehet tesztelni egy egyszerű nem React kliens oldali JavaScript kódot a Jest és a jest-fetch-mock segítségével. A tesztelés során biztosítjuk, hogy a különböző funkciók, mint a felhasználók lekérdezése, felvitele és törlése megfelelően működjenek. A fetch mockolásával elkerüljük, hogy tényleges API kéréseket kelljen küldeni.

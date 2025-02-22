@@ -1,0 +1,65 @@
+A szerver oldali teszteléshez használhatjuk a Jest-et és az supertest-et, hogy HTTP-kéréseket szimuláljunk és teszteljük a szerver válaszait.
+A szükséges csomagok telepítése:
+
+npm install --save-dev jest supertest
+
+Szerver oldali teszt (server.test.js):
+
+Feltételezve, hogy van egy Express szerverünk, amely a /api/generations végponton kezeli a kéréseket, így nézhet ki a teszt:
+
+const request = require('supertest');
+const app = require('./app'); // Az Express alkalmazásod
+
+describe('API Endpoints', () => {
+  it('GET /api/generations - sikeres lekérdezés', async () => {
+    const response = await request(app).get('/api/generations');
+    
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: expect.any(Number),
+        name: expect.any(String),
+        birthdate: expect.any(String),
+        age: expect.any(Number),
+        gen: expect.any(String),
+      }),
+    ]));
+  });
+
+  it('POST /api/generations - sikeres felvitel', async () => {
+    const newUser = {
+      name: 'John Doe',
+      birthdate: '1990-01-01',
+    };
+    
+    const response = await request(app).post('/api/generations').send(newUser);
+    
+    expect(response.status).toBe(201);
+    expect(response.body.message).toBe('Felhasználó sikeresen hozzáadva');
+    expect(response.body.user).toHaveProperty('id');
+  });
+
+  it('DELETE /api/generations/:id - felhasználó törlése', async () => {
+    // Először egy felhasználó hozzáadása
+    const newUser = {
+      name: 'Jane Doe',
+      birthdate: '1995-02-02',
+    };
+    
+    const createResponse = await request(app).post('/api/generations').send(newUser);
+    const userId = createResponse.body.user.id;
+
+    // Törlés kérése
+    const response = await request(app).delete(`/api/generations/${userId}`);
+    
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe('Felhasználó sikeresen törölve');
+  });
+});
+
+Tesztelési magyarázat:
+
+    A supertest könyvtár segítségével HTTP-kéréseket küldünk az Express szerverhez.
+    A GET kérés a /api/generations végpontra ellenőrzi, hogy a szerver helyesen válaszol-e.
+    A POST kérés a /api/generations végpontra egy új felhasználó hozzáadását teszteli.
+    A DELETE kérés a felhasználó törlésére szolgál.
