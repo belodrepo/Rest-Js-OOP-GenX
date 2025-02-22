@@ -15,7 +15,7 @@ async function getUsers() {
             <td>${user.age}</td>
             <td>${user.gen}</td>
             <td>
-            <button class="btn btn-danger" onClick="deleteUser(${user.id})"><i class="fa fa-trash"></i></button>
+            <button class="btn btn-danger" title="A(z) ${user.name} nevű felhasználó törlése."onClick="deleteUser(${user.id})"><i class="fa fa-trash"></i></button>
             </td>
         </tr>
         `).join('');
